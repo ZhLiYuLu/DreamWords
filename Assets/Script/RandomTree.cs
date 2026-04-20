@@ -7,9 +7,9 @@ public class TreeRandomSpawner : MonoBehaviour
     public GameObject treePrefab;
     public int treeCount = 3000;
 
-    [Header("随机范围")]
-    public float minScale = 0.8f;
-    public float maxScale = 2.2f;
+    [Header("检测禁区")]
+    public string noTreeTag = "NoTreeZone"; // 禁区标签
+    public float checkRadius = 10f;         // 检测半径，大点更安全
 
     void Start()
     {
@@ -26,25 +26,38 @@ public class TreeRandomSpawner : MonoBehaviour
 
         for (int i = 0; i < treeCount; i++)
         {
-            // 随机 XZ
+            // 随机位置
             float x = Random.Range(terrainPos.x, terrainPos.x + terrainSize.x);
             float z = Random.Range(terrainPos.z, terrainPos.z + terrainSize.z);
-
-            // 地形高度
             float y = targetTerrain.SampleHeight(new Vector3(x, 0, z));
+            Vector3 spawnPos = new Vector3(x, y, z);
 
-            // 实例化
+            // 关键：检查是否在禁区里
+            if (Physics.CheckSphere(spawnPos, checkRadius, LayerMask.GetMask("Default")))
+            {
+                Collider[] hitColliders = Physics.OverlapSphere(spawnPos, checkRadius);
+                bool inNoTreeZone = false;
+
+                foreach (var col in hitColliders)
+                {
+                    if (col.CompareTag(noTreeTag))
+                    {
+                        inNoTreeZone = true;
+                        break;
+                    }
+                }
+
+                if (inNoTreeZone)
+                    continue; // 在禁区 → 跳过，不生成树
+            }
+
+            // 生成树
             GameObject t = Instantiate(
                 treePrefab,
-                new Vector3(x, y, z),
+                spawnPos,
                 Quaternion.Euler(0, Random.Range(0, 360), 0)
             );
 
-            //// 随机大小
-            //float scale = Random.Range(minScale, maxScale);
-            //t.transform.localScale = Vector3.one * scale;
-
-            // 父物体挂到地形下（可选）
             t.transform.parent = targetTerrain.transform;
         }
     }
