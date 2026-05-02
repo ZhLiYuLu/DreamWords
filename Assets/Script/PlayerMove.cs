@@ -15,6 +15,9 @@ public class PlayerMove : MonoBehaviour
     public GameObject mirrorUI;
     private bool isInMirrorArea = false;
 
+    // 新增：是否打开了大地图（打开时停止移动、显示鼠标）
+    private bool isMapOpen = false;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -29,7 +32,8 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
-        if (!isInMirrorArea)
+        // 打开地图时 禁止移动
+        if (!isInMirrorArea && !isMapOpen)
         {
             PlayerMoveAndLook();
         }
@@ -72,7 +76,6 @@ public class PlayerMove : MonoBehaviour
             }
         }
 
-        // 进入镜子 → 只解锁一次！！
         if (nowInMirror && !isInMirrorArea)
         {
             isInMirrorArea = true;
@@ -80,7 +83,6 @@ public class PlayerMove : MonoBehaviour
             UnlockMouse();
         }
 
-        // 离开镜子 → 只锁定一次！！
         if (!nowInMirror && isInMirrorArea)
         {
             isInMirrorArea = false;
@@ -102,14 +104,28 @@ public class PlayerMove : MonoBehaviour
         CloseMirrorUITotal();
     }
 
-    // 锁定鼠标（游戏状态）
-    void LockMouse()
+    // ###########################
+    // 给 地图UI 调用的方法
+    // ###########################
+    public void OpenMapUI()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        isMapOpen = true;
+        UnlockMouse(); // 显示鼠标，才能点击
     }
 
-    // 解锁鼠标（UI状态）
+    public void CloseMapUI()
+    {
+        isMapOpen = false;
+        LockMouse(); // 隐藏鼠标
+    }
+
+    void LockMouse()
+    {
+        // 暂时全部注释掉，不锁鼠标
+        // Cursor.lockState = CursorLockMode.Locked;
+        // Cursor.visible = false;
+    }
+
     void UnlockMouse()
     {
         Cursor.lockState = CursorLockMode.None;
